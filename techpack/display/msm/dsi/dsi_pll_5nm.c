@@ -12,7 +12,7 @@
 #include <linux/of.h>
 #include <linux/platform_device.h>
 #include "dsi_pll.h"
-#include <dt-bindings/clock/mdss-5nm-pll-clk.h>
+#include <msm_pll/mdss-5nm-pll-clk.h>
 
 #define VCO_DELAY_USEC 1
 

@@ -17,7 +17,7 @@
  *
  */
 
-#include <dt-bindings/clock/mdss-7nm-pll-clk.h>
+#include <msm_pll/mdss-7nm-pll-clk.h>
 #include <linux/clk.h>
 #include <linux/delay.h>
 #include <linux/err.h>

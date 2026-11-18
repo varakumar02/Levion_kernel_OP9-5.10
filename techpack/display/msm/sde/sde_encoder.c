@@ -5948,7 +5948,7 @@ int sde_encoder_update_caps_for_cont_splash(struct drm_encoder *encoder,
 			drm_mode->hdisplay, drm_mode->vdisplay);
 	drm_set_preferred_mode(conn, drm_mode->hdisplay, drm_mode->vdisplay);
 
-	if (encoder->bridge) {
+	if (drm_bridge_chain_get_first_bridge(encoder)) {
 		SDE_DEBUG_ENC(sde_enc, "Bridge mapped to encoder\n");
 		/*
 		 * For cont-splash use case, we update the mode
@@ -5958,9 +5958,9 @@ int sde_encoder_update_caps_for_cont_splash(struct drm_encoder *encoder,
 		 * be updated with the current drm mode by
 		 * calling the bridge mode set ops.
 		 */
-		if (encoder->bridge->funcs) {
+		if (drm_bridge_chain_get_first_bridge(encoder)->funcs) {
 			SDE_DEBUG_ENC(sde_enc, "calling mode_set\n");
-			encoder->bridge->funcs->mode_set(encoder->bridge,
+			drm_bridge_chain_get_first_bridge(encoder)->funcs->mode_set(drm_bridge_chain_get_first_bridge(encoder),
 						drm_mode, drm_mode);
 		}
 	} else {

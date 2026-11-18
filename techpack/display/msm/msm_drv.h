@@ -1120,6 +1120,8 @@ int msm_gem_madvise(struct drm_gem_object *obj, unsigned madv);
 int msm_gem_cpu_prep(struct drm_gem_object *obj, uint32_t op, ktime_t *timeout);
 int msm_gem_cpu_fini(struct drm_gem_object *obj);
 void msm_gem_free_object(struct drm_gem_object *obj);
+void msm_gem_free_object_unlocked(struct drm_gem_object *obj);
+void msm_gem_object_put_locked(struct drm_gem_object *obj);
 int msm_gem_new_handle(struct drm_device *dev, struct drm_file *file,
 		uint32_t size, uint32_t flags, uint32_t *handle, char *name);
 struct drm_gem_object *msm_gem_new(struct drm_device *dev,
@@ -1393,8 +1395,8 @@ static inline unsigned long timeout_to_jiffies(const ktime_t *timeout)
 		remaining_jiffies = 0;
 	} else {
 		ktime_t rem = ktime_sub(*timeout, now);
-		struct timespec ts = ktime_to_timespec(rem);
-		remaining_jiffies = timespec_to_jiffies(&ts);
+		struct timespec64 ts = ktime_to_timespec64(rem);
+		remaining_jiffies = timespec64_to_jiffies(&ts);
 	}
 
 	return remaining_jiffies;

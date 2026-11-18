@@ -373,10 +373,7 @@ void iris_dsi_display_debugfs_init(struct dsi_display *display,
 	display->cnt = 1;
 	display->cmd_data_type = MIPI_DSI_DCS_LONG_WRITE;
 
-	dump_file = debugfs_create_x8("cmd_data_type", 0600, dir, &display->cmd_data_type);
-	if (IS_ERR_OR_NULL(dump_file))
-		pr_err("[%s] debugfs create panel cmd_data_type file failed, rc=%ld\n",
-				display->name, PTR_ERR(dump_file));
+	debugfs_create_x8("cmd_data_type", 0600, dir, &display->cmd_data_type);
 
 	dump_file = debugfs_create_file("off",
 			0600,

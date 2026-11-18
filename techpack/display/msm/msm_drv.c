@@ -282,7 +282,7 @@ void __iomem *msm_ioremap(struct platform_device *pdev, const char *name,
 
 	size = resource_size(res);
 
-	ptr = devm_ioremap_nocache(&pdev->dev, res->start, size);
+	ptr = devm_ioremap(&pdev->dev, res->start, size);
 	if (!ptr) {
 		dev_err(&pdev->dev, "failed to ioremap: %s\n", name);
 		return ERR_PTR(-ENOMEM);
@@ -1153,7 +1153,9 @@ static void msm_lastclose(struct drm_device *dev)
 		if (rc)
 			DRM_ERROR("restore FBDEV mode failed: %d\n", rc);
 	} else if (kms && kms->client.dev) {
-		rc = drm_client_modeset_commit_force(&kms->client);
+		mutex_lock(&kms->client.modeset_mutex);
+		rc = drm_client_modeset_commit_locked(&kms->client);
+		mutex_unlock(&kms->client.modeset_mutex);
 		if (rc)
 			DRM_ERROR("client modeset commit failed: %d\n", rc);
 	}
@@ -1268,7 +1270,7 @@ static int msm_ioctl_gem_cpu_prep(struct drm_device *dev, void *data,
 
 	ret = msm_gem_cpu_prep(obj, args->op, &timeout);
 
-	drm_gem_object_put_unlocked(obj);
+	drm_gem_object_put(obj);
 
 	return ret;
 }
@@ -1286,7 +1288,7 @@ static int msm_ioctl_gem_cpu_fini(struct drm_device *dev, void *data,
 
 	ret = msm_gem_cpu_fini(obj);
 
-	drm_gem_object_put_unlocked(obj);
+	drm_gem_object_put(obj);
 
 	return ret;
 }
@@ -1322,7 +1324,7 @@ static int msm_ioctl_gem_madvise(struct drm_device *dev, void *data,
 		ret = 0;
 	}
 
-	drm_gem_object_put(obj);
+	msm_gem_object_put_locked(obj);
 
 unlock:
 	mutex_unlock(&dev->struct_mutex);
@@ -1855,7 +1857,7 @@ static struct drm_driver msm_driver = {
 	.irq_uninstall      = msm_irq_uninstall,
 	.enable_vblank      = msm_enable_vblank,
 	.disable_vblank     = msm_disable_vblank,
-	.gem_free_object    = msm_gem_free_object,
+	.gem_free_object_unlocked = msm_gem_free_object_unlocked,
 	.gem_vm_ops         = &vm_ops,
 	.dumb_create        = msm_gem_dumb_create,
 	.dumb_map_offset    = msm_gem_dumb_map_offset,

@@ -19,7 +19,7 @@
 #include "sde_vdc_helper.h"
 
 #ifdef OPLUS_BUG_STABILITY
-#include <soc/oplus/boot_mode.h>
+#include <soc/oplus/system/boot_mode.h>
 #include "oplus_display_private_api.h"
 #include "oplus_dc_diming.h"
 #include "oplus_onscreenfingerprint.h"
@@ -139,7 +139,7 @@ static int dsi_panel_vreg_get(struct dsi_panel *panel)
 	for (i = 0; i < panel->power_info.count; i++) {
 		vreg = devm_regulator_get(panel->parent,
 					  panel->power_info.vregs[i].vreg_name);
-		rc = PTR_RET(vreg);
+		rc = PTR_ERR_OR_ZERO(vreg);
 		if (rc) {
 			DSI_ERR("failed to get %s regulator\n",
 			       panel->power_info.vregs[i].vreg_name);
@@ -3130,7 +3130,7 @@ int dsi_panel_get_io_resources(struct dsi_panel *panel,
 parse_fail:
 	list_for_each_entry_safe(pos, tmp, &temp_head, list) {
 		list_del(&pos->list);
-		kzfree(pos);
+		kfree_sensitive(pos);
 	}
 end:
 	return rc;
@@ -3585,11 +3585,7 @@ static int dsi_panel_parse_dsc_params(struct dsi_display_mode *mode,
 		 */
 		priv_info->dsc.config.dsc_version_major = (data >> 4) & 0x0F;
 		priv_info->dsc.config.dsc_version_minor = data & 0x0F;
-		if ((priv_info->dsc.config.dsc_version_major != 0x1) &&
-				((priv_info->dsc.config.dsc_version_minor
-				  != 0x1) ||
-				 (priv_info->dsc.config.dsc_version_minor
-				  != 0x2))) {
+		if (priv_info->dsc.config.dsc_version_major != 0x1) {
 			DSI_ERR("%s:unsupported major:%d minor:%d version\n",
 					__func__,
 					priv_info->dsc.config.dsc_version_major,
@@ -4672,13 +4668,11 @@ struct dsi_panel *dsi_panel_get(struct device *parent,
 	}
 
 	panel->power_mode = SDE_MODE_DPMS_OFF;
-	drm_panel_init(&panel->drm_panel);
-	panel->drm_panel.dev = &panel->mipi_device.dev;
+	drm_panel_init(&panel->drm_panel, &panel->mipi_device.dev, NULL,
+		       DRM_MODE_CONNECTOR_DSI);
 	panel->mipi_device.dev.of_node = of_node;
 
-	rc = drm_panel_add(&panel->drm_panel);
-	if (rc)
-		goto error_vreg_put;
+	drm_panel_add(&panel->drm_panel);
 
 	mutex_init(&panel->panel_lock);
 	if (!strcmp(panel->name, "samsung ams662zs01 dvt dsc cmd mode panel")
@@ -4687,8 +4681,6 @@ struct dsi_panel *dsi_panel_get(struct device *parent,
 	}
 
 	return panel;
-error_vreg_put:
-	(void)dsi_panel_vreg_put(panel);
 error:
 	kfree(panel);
 	return ERR_PTR(rc);
@@ -6144,10 +6136,9 @@ int dsi_panel_unprepare(struct dsi_panel *panel)
 		goto error;
 	}
 
-#ifdef OPLUS_BUG_STABILITY
+#if defined(OPLUS_BUG_STABILITY) && IS_ENABLED(CONFIG_TOUCHPANEL_OPLUS)
 	if (!strcmp(panel->name, "21075 ds ili7807s fhd tft lcd panel with dsc") \
 		&& (!IS_ERR_OR_NULL(tp_gesture_enable_notifier))) {
-#if IS_ENABLED(CONFIG_TOUCHPANEL_OPLUS)
 		if ((1 != tp_gesture_enable_notifier(0)) || (shutdown_flag == 1)) {
 			if (!strcmp(panel->name, "21075 ds ili7807s fhd tft lcd panel with dsc") && gpio_is_valid(441)) {
 				gpio_set_value(441, 0);
@@ -6158,9 +6149,8 @@ int dsi_panel_unprepare(struct dsi_panel *panel)
 				gpio_set_value(panel->reset_config.reset_gpio, 0);
 			usleep_range(5000, 6000);
 		}
-#endif
 	}
-#endif /*OPLUS_BUG_STABILITY*/
+#endif /*OPLUS_BUG_STABILITY && CONFIG_TOUCHPANEL_OPLUS*/
 
 error:
 	mutex_unlock(&panel->panel_lock);

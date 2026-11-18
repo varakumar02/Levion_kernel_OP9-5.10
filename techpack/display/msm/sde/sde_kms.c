@@ -58,7 +58,9 @@
 #include <linux/qcom_scm.h>
 #include "soc/qcom/secure_buffer.h"
 #include <linux/qtee_shmbridge.h>
-#include <linux/haven/hh_irq_lend.h>
+#include <linux/dma-map-ops.h>
+#include <linux/qcom-iommu-util.h>
+#include <linux/gunyah/gh_irq_lend.h>
 #if defined(OPLUS_FEATURE_PXLW_IRIS5) || defined(OPLUS_FEATURE_PXLW_IRISSOFT)
 #include "iris/dsi_iris5_api.h"
 #endif
@@ -369,7 +371,7 @@ static int _sde_kms_scm_call(struct sde_kms *sde_kms, int vmid)
 		SDE_DEBUG("sid_mask[%d]: %d\n", i, sec_sid[i]);
 	}
 
-	ret = dma_coerce_mask_and_coherent(&dummy, DMA_BIT_MASK(64));
+	ret = dma_coerce_mask_and_coherent(&dummy, ~0ULL);
 	if (ret) {
 		SDE_ERROR("Failed to set dma mask for dummy dev %d\n", ret);
 		goto map_error;
@@ -983,7 +985,7 @@ static void _sde_kms_drm_check_dpms(struct drm_atomic_state *old_state,
 			struct drm_panel_notifier notifier_data;
 
 			SDE_EVT32(old_mode, new_mode, old_fps, new_fps,
-				connector->panel, crtc->state->active,
+				to_sde_connector(connector)->panel, crtc->state->active,
 				old_conn_state->crtc, event);
 			pr_debug("change detected (power mode %d->%d, fps %d->%d)\n",
 				old_mode, new_mode, old_fps, new_fps);
@@ -1001,8 +1003,8 @@ static void _sde_kms_drm_check_dpms(struct drm_atomic_state *old_state,
 			notifier_data.id = connector->base.id;
 
 #ifndef OPLUS_BUG_STABILITY
-			if (connector->panel)
-				drm_panel_notifier_call_chain(connector->panel,
+			if (to_sde_connector(connector)->panel)
+				drm_panel_notifier_call_chain(to_sde_connector(connector)->panel,
 							event, &notifier_data);
 #endif
 		}
@@ -3327,8 +3329,7 @@ static int sde_kms_inform_cont_splash_res_disable(struct msm_kms *kms,
 			if (!dsi_display || !encoder) {
 				sde_conn->ops.cont_splash_res_disable
 						(sde_conn->display);
-			} else if (connector->encoder_ids[0]
-					== encoder->base.id) {
+			} else if ((connector->possible_encoders & drm_encoder_mask(encoder))) {
 				/**
 				 * This handles dual DSI
 				 * configuration where one DSI
@@ -3519,7 +3520,7 @@ static int sde_kms_cont_splash_config(struct msm_kms *kms,
 			 * ever have to support continuous splash for
 			 * external displays in MST configuration.
 			 */
-			if (connector->encoder_ids[0] == encoder->base.id)
+			if ((connector->possible_encoders & drm_encoder_mask(encoder)))
 				break;
 		}
 		drm_connector_list_iter_end(&conn_iter);
@@ -3622,7 +3623,7 @@ static int sde_kms_cont_splash_config(struct msm_kms *kms,
 			 * ever have to support continuous splash for
 			 * external displays in MST configuration.
 			 */
-			if (connector->encoder_ids[0] == encoder->base.id)
+			if ((connector->possible_encoders & drm_encoder_mask(encoder)))
 				break;
 		}
 
@@ -4959,7 +4960,7 @@ int sde_kms_get_io_resources(struct sde_kms *sde_kms, struct msm_io_res *io_res)
 		return rc;
 	}
 
-	rc = msm_dss_get_io_irq(pdev, &io_res->irq, HH_IRQ_LABEL_SDE);
+	rc = msm_dss_get_io_irq(pdev, &io_res->irq, GH_IRQ_LABEL_SDE);
 	if (rc) {
 		SDE_ERROR("failed to get io irq for KMS");
 		return rc;

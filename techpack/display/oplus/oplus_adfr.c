@@ -99,7 +99,7 @@ void oplus_adfr_init(struct dsi_panel *panel)
 	pr_info("kVRR oplus_adfr_init now.");
 
 	if (inited && oplus_adfr_config) {
-		pr_warning("kVRR adfr config = %#X already!", oplus_adfr_config);
+		pr_warn("kVRR adfr config = %#X already!", oplus_adfr_config);
 		return;
 	}
 
@@ -437,11 +437,11 @@ void oplus_adfr_force_qsync_mode_off(void *drm_connector)
 	struct dsi_bridge *c_bridge;
 	struct dsi_display *display;
 
-	if (!connector || !connector->encoder || !connector->encoder->bridge)
+	if (!connector || !connector->encoder || !drm_bridge_chain_get_first_bridge(connector->encoder))
 		return;
 
 	c_conn = to_sde_connector(connector);
-	c_bridge = to_dsi_bridge(connector->encoder->bridge);
+	c_bridge = to_dsi_bridge(drm_bridge_chain_get_first_bridge(connector->encoder));
 	display = c_bridge->display;
 
 	if (!display)
@@ -1134,12 +1134,12 @@ void sde_encoder_adfr_vsync_switch(void *enc) {
 	}
 
 	if ((drm_conn == NULL) || (drm_conn->encoder == NULL)
-		|| (drm_conn->encoder->bridge == NULL)) {
+		|| (drm_bridge_chain_get_first_bridge(drm_conn->encoder) == NULL)) {
 		SDE_ERROR("kVRR : invalid drm connector parameters\n");
 		return;
 	}
 
-	c_bridge = container_of(drm_conn->encoder->bridge, struct dsi_bridge, base);
+	c_bridge = container_of(drm_bridge_chain_get_first_bridge(drm_conn->encoder), struct dsi_bridge, base);
 	display = c_bridge->display;
 
 	if ((display == NULL) || (display->panel == NULL)) {

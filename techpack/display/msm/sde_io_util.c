@@ -179,7 +179,7 @@ int msm_dss_get_pmic_io_mem(struct platform_device *pdev,
 parse_fail:
 	msm_dss_clean_io_mem(&temp_head);
 end:
-	kzfree(res);
+	kfree_sensitive(res);
 	return rc;
 }
 EXPORT_SYMBOL(msm_dss_get_pmic_io_mem);
@@ -264,7 +264,7 @@ void msm_dss_clean_io_mem(struct list_head *mem_list)
 
 	list_for_each_entry_safe(pos, tmp, mem_list, list) {
 		list_del(&pos->list);
-		kzfree(pos);
+		kfree_sensitive(pos);
 	}
 }
 EXPORT_SYMBOL(msm_dss_clean_io_mem);
@@ -300,7 +300,7 @@ void msm_dss_clean_io_irq(struct list_head *irq_list)
 
 	list_for_each_entry_safe(pos, tmp, irq_list, list) {
 		list_del(&pos->list);
-		kzfree(pos);
+		kfree_sensitive(pos);
 	}
 }
 EXPORT_SYMBOL(msm_dss_clean_io_irq);
@@ -319,7 +319,7 @@ int msm_dss_get_vreg(struct device *dev, struct dss_vreg *in_vreg,
 			curr_vreg = &in_vreg[i];
 			curr_vreg->vreg = regulator_get(dev,
 				curr_vreg->vreg_name);
-			rc = PTR_RET(curr_vreg->vreg);
+			rc = PTR_ERR_OR_ZERO(curr_vreg->vreg);
 			if (rc) {
 				DEV_ERR("%pS->%s: %s get failed. rc=%d\n",
 					 __builtin_return_address(0), __func__,
@@ -378,7 +378,7 @@ int msm_dss_enable_vreg(struct dss_vreg *in_vreg, int num_vreg, int enable)
 
 	if (enable) {
 		for (i = 0; i < num_vreg; i++) {
-			rc = PTR_RET(in_vreg[i].vreg);
+			rc = PTR_ERR_OR_ZERO(in_vreg[i].vreg);
 			if (rc) {
 				DEV_ERR("%pS->%s: %s regulator error. rc=%d\n",
 					__builtin_return_address(0), __func__,
@@ -514,7 +514,7 @@ int msm_dss_get_clk(struct device *dev, struct dss_clk *clk_arry, int num_clk)
 
 	for (i = 0; i < num_clk; i++) {
 		clk_arry[i].clk = clk_get(dev, clk_arry[i].clk_name);
-		rc = PTR_RET(clk_arry[i].clk);
+		rc = PTR_ERR_OR_ZERO(clk_arry[i].clk);
 		if (rc) {
 			DEV_ERR("%pS->%s: '%s' get failed. rc=%d\n",
 				__builtin_return_address(0), __func__,

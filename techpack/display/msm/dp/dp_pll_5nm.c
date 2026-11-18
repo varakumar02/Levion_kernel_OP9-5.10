@@ -54,7 +54,7 @@
  *
  */
 
-#include <dt-bindings/clock/mdss-5nm-pll-clk.h>
+#include <msm_pll/mdss-5nm-pll-clk.h>
 #include <linux/clk.h>
 #include <linux/delay.h>
 #include <linux/err.h>

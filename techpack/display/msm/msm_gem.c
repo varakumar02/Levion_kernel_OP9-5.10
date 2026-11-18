@@ -100,7 +100,7 @@ static struct page **get_pages(struct drm_gem_object *obj)
 
 		msm_obj->pages = p;
 
-		msm_obj->sgt = drm_prime_pages_to_sg(p, npages);
+		msm_obj->sgt = drm_prime_pages_to_sg(dev, p, npages);
 		if (IS_ERR(msm_obj->sgt)) {
 			void *ptr = ERR_CAST(msm_obj->sgt);
 
@@ -704,7 +704,7 @@ int msm_gem_dumb_map_offset(struct drm_file *file, struct drm_device *dev,
 
 	*offset = msm_gem_mmap_offset(obj);
 
-	drm_gem_object_put_unlocked(obj);
+	drm_gem_object_put(obj);
 
 fail:
 	return ret;
@@ -1051,6 +1051,35 @@ void msm_gem_free_object(struct drm_gem_object *obj)
 	kfree(msm_obj);
 }
 
+/*
+ * 5.10 drm_driver only has gem_free_object_unlocked. msm_gem_free_object()
+ * expects dev->struct_mutex held, as the 5.4 gem_free_object path did.
+ */
+void msm_gem_free_object_unlocked(struct drm_gem_object *obj)
+{
+	struct drm_device *dev = obj->dev;
+
+	mutex_lock(&dev->struct_mutex);
+	msm_gem_free_object(obj);
+	mutex_unlock(&dev->struct_mutex);
+}
+
+static void msm_gem_kref_free_locked(struct kref *kref)
+{
+	msm_gem_free_object(container_of(kref, struct drm_gem_object, refcount));
+}
+
+/*
+ * Reference drop for callers that hold dev->struct_mutex (the 5.4 locked
+ * drm_gem_object_put()). Frees through msm_gem_free_object() directly so
+ * the mutex is not taken twice.
+ */
+void msm_gem_object_put_locked(struct drm_gem_object *obj)
+{
+	WARN_ON(!mutex_is_locked(&obj->dev->struct_mutex));
+	kref_put(&obj->refcount, msm_gem_kref_free_locked);
+}
+
 /* convenience method to construct a GEM buffer object, and userspace handle */
 int msm_gem_new_handle(struct drm_device *dev, struct drm_file *file,
 		uint32_t size, uint32_t flags, uint32_t *handle,
@@ -1070,7 +1099,7 @@ int msm_gem_new_handle(struct drm_device *dev, struct drm_file *file,
 	ret = drm_gem_handle_create(file, obj, handle);
 
 	/* drop reference from allocate - handle holds it now */
-	drm_gem_object_put_unlocked(obj);
+	drm_gem_object_put(obj);
 
 	return ret;
 }
@@ -1194,7 +1223,7 @@ static struct drm_gem_object *_msm_gem_new(struct drm_device *dev,
 	return obj;
 
 fail:
-	drm_gem_object_put_unlocked(obj);
+	drm_gem_object_put(obj);
 	return ERR_PTR(ret);
 }
 
@@ -1312,7 +1341,7 @@ struct drm_gem_object *msm_gem_import(struct drm_device *dev,
 	return obj;
 
 fail:
-	drm_gem_object_put_unlocked(obj);
+	drm_gem_object_put(obj);
 	return ERR_PTR(ret);
 }
 
@@ -1346,9 +1375,9 @@ static void *_msm_gem_kernel_new(struct drm_device *dev, uint32_t size,
 	return vaddr;
 err:
 	if (locked)
-		drm_gem_object_put(obj);
+		msm_gem_object_put_locked(obj);
 	else
-		drm_gem_object_put_unlocked(obj);
+		drm_gem_object_put(obj);
 
 	return ERR_PTR(ret);
 
@@ -1378,9 +1407,9 @@ void msm_gem_kernel_put(struct drm_gem_object *bo,
 	msm_gem_unpin_iova(bo, aspace);
 
 	if (locked)
-		drm_gem_object_put(bo);
+		msm_gem_object_put_locked(bo);
 	else
-		drm_gem_object_put_unlocked(bo);
+		drm_gem_object_put(bo);
 }
 
 void msm_gem_object_set_name(struct drm_gem_object *bo, const char *fmt, ...)

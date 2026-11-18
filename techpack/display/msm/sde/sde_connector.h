@@ -494,6 +494,7 @@ struct sde_connector_dyn_hdr_metadata {
  */
 struct sde_connector {
 	struct drm_connector base;
+	struct drm_panel *panel;
 
 	int connector_type;
 

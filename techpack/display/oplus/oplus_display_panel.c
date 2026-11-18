@@ -176,16 +176,6 @@ static void panel_dmabuf_vunmap(struct dma_buf *dma_buf, void *vaddr)
 	return;
 }
 
-static void *panel_dmabuf_kmap(struct dma_buf *dma_buf, unsigned long page_num)
-{
-	return p_apollo_backlight->vaddr;
-}
-
-static void panel_dmabuf_kunmap(struct dma_buf *dma_buf, unsigned long page_num, void *addr)
-{
-	return;
-}
-
 static int panel_dmabuf_mmap(struct dma_buf *dma_buf, struct vm_area_struct *vma)
 {
 	void *vaddr = p_apollo_backlight->vaddr;
@@ -208,8 +198,6 @@ static const struct dma_buf_ops oplus_dmabuf_ops = {
 	.map_dma_buf = panel_map_dma_buf,
 	.unmap_dma_buf = panel_unmap_dma_buf,
 	.release = panel_dmabuf_release,
-	.map = panel_dmabuf_kmap,
-	.unmap = panel_dmabuf_kunmap,
 	.vmap = panel_dmabuf_vmap,
 	.vunmap = panel_dmabuf_vunmap,
 };

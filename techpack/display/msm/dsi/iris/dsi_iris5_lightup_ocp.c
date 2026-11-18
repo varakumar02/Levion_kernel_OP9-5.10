@@ -766,13 +766,13 @@ static u32 _iris_pt_add_cmd(
 	case MIPI_DSI_DCS_SHORT_WRITE_PARAM:
 	case MIPI_DSI_GENERIC_SHORT_WRITE_1_PARAM:
 	case MIPI_DSI_GENERIC_SHORT_WRITE_2_PARAM:
-	case MIPI_DSI_DCS_COMPRESSION_MODE:
+	case MIPI_DSI_COMPRESSION_MODE:
 	case MIPI_DSI_SET_MAXIMUM_RETURN_PACKET_SIZE:
 		sum = _iris_pt_short_write(pocp_cmd, &header, dsi_cmd);
 		break;
 	case MIPI_DSI_GENERIC_LONG_WRITE:
 	case MIPI_DSI_DCS_LONG_WRITE:
-	case MIPI_DSI_PPS_LONG_WRITE:
+	case MIPI_DSI_PICTURE_PARAMETER_SET:
 		sum = _iris_pt_long_write(pocp_cmd, &header, dsi_cmd);
 		break;
 	default:

@@ -81,7 +81,7 @@ static int _iris_get_vreg(void)
 	for (i = 0; i < pcfg->iris_power_info.count; i++) {
 		vreg = devm_regulator_get(panel->parent,
 				pcfg->iris_power_info.vregs[i].vreg_name);
-		rc = PTR_RET(vreg);
+		rc = PTR_ERR_OR_ZERO(vreg);
 		if (rc) {
 			IRIS_LOGE("failed to get %s regulator",
 					pcfg->iris_power_info.vregs[i].vreg_name);

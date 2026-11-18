@@ -2399,14 +2399,8 @@ static int dsi_display_debugfs_init(struct dsi_display *display)
 
 		snprintf(name, ARRAY_SIZE(name),
 				"%s_regulator_min_datarate_bps", phy->name);
-		dump_file = debugfs_create_u32(name, 0600, dir,
+		debugfs_create_u32(name, 0600, dir,
 				&phy->regulator_min_datarate_bps);
-		if (IS_ERR_OR_NULL(dump_file)) {
-			rc = PTR_ERR(dump_file);
-			DSI_ERR("[%s] debugfs create %s failed, rc=%d\n",
-			       display->name, name, rc);
-			goto error_remove_dir;
-		}
 	}
 
 	if (!debugfs_create_bool("ulps_feature_enable", 0600, dir,
@@ -2430,12 +2424,8 @@ static int dsi_display_debugfs_init(struct dsi_display *display)
 		goto error_remove_dir;
 	}
 
-	if (!debugfs_create_u32("clk_gating_config", 0600, dir,
-			&display->clk_gating_config)) {
-		DSI_ERR("[%s] debugfs create clk gating config failed\n",
-		       display->name);
-		goto error_remove_dir;
-	}
+	debugfs_create_u32("clk_gating_config", 0600, dir,
+			&display->clk_gating_config);
 #if defined(OPLUS_FEATURE_PXLW_IRIS5)
 	iris_dsi_display_debugfs_init(display, dir, dump_file);
 #endif
@@ -7055,6 +7045,7 @@ static void dsi_display_drm_ext_adjust_timing(
 
 static enum drm_mode_status dsi_display_drm_ext_bridge_mode_valid(
 		struct drm_bridge *bridge,
+		const struct drm_display_info *info,
 		const struct drm_display_mode *mode)
 {
 	struct dsi_display_ext_bridge *ext_bridge;
@@ -7066,7 +7057,7 @@ static enum drm_mode_status dsi_display_drm_ext_bridge_mode_valid(
 
 	tmp = *mode;
 	dsi_display_drm_ext_adjust_timing(ext_bridge->display, &tmp);
-	return ext_bridge->orig_funcs->mode_valid(bridge, &tmp);
+	return ext_bridge->orig_funcs->mode_valid(bridge, info, &tmp);
 }
 
 static bool dsi_display_drm_ext_bridge_mode_fixup(
@@ -7212,7 +7203,7 @@ int dsi_display_drm_ext_bridge_init(struct dsi_display *display,
 		return -EINVAL;
 
 	drm = encoder->dev;
-	bridge = encoder->bridge;
+	bridge = drm_bridge_chain_get_first_bridge(encoder);
 	sde_conn = to_sde_connector(connector);
 	prev_bridge = bridge;
 
@@ -7250,7 +7241,7 @@ int dsi_display_drm_ext_bridge_init(struct dsi_display *display,
 			ext_bridge->funcs = &ext_bridge_info->bridge_funcs;
 		}
 
-		rc = drm_bridge_attach(encoder, ext_bridge, prev_bridge);
+		rc = drm_bridge_attach(encoder, ext_bridge, prev_bridge, 0);
 		if (rc) {
 			DSI_ERR("[%s] ext brige attach failed, %d\n",
 				display->name, rc);
@@ -7268,7 +7259,8 @@ int dsi_display_drm_ext_bridge_init(struct dsi_display *display,
 		ext_conn = list_last_entry(&drm->mode_config.connector_list,
 			struct drm_connector, head);
 		if (ext_conn && ext_conn != connector &&
-			ext_conn->encoder_ids[0] == bridge->encoder->base.id) {
+			(ext_conn->possible_encoders &
+			 drm_encoder_mask(bridge->encoder))) {
 			list_del_init(&ext_conn->head);
 			display->ext_conn = ext_conn;
 		}
