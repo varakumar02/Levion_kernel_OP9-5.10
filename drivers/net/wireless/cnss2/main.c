@@ -1610,6 +1610,17 @@ static int cnss_subsys_ramdump(int enable,
 static void cnss_recovery_work_handler(struct work_struct *work)
 {
 }
+
+/*
+ * Device-crash entry point used by cnss_pci_device_crashed(). On the
+ * subsystem-restart path the shutdown, ramdump and power-up are run by
+ * the subsystem ops, so request a restart of the WLAN subsystem.
+ */
+void cnss_recovery_handler(struct cnss_plat_data *plat_priv)
+{
+	set_bit(CNSS_DRIVER_RECOVERY, &plat_priv->driver_state);
+	subsystem_restart_dev(plat_priv->subsys_info.subsys_device);
+}
 #else
 void cnss_recovery_handler(struct cnss_plat_data *plat_priv)
 {
