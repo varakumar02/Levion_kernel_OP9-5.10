@@ -31,6 +31,7 @@
 #include <soc/qcom/qcom_ramdump.h>
 #endif
 #if IS_ENABLED(CONFIG_MSM_SUBSYSTEM_RESTART)
+#include <soc/qcom/ramdump.h>
 #include <soc/qcom/subsystem_notif.h>
 #include <soc/qcom/subsystem_restart.h>
 #endif
