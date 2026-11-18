@@ -123,6 +123,7 @@ struct arm_smmu_option_prop {
 
 static struct arm_smmu_option_prop arm_smmu_options[] = {
 	{ ARM_SMMU_OPT_FATAL_ASF, "qcom,fatal-asf" },
+	{ ARM_SMMU_OPT_SKIP_INIT, "qcom,skip-init" },
 	{ ARM_SMMU_OPT_3LVL_TABLES, "qcom,use-3-lvl-tables" },
 	{ ARM_SMMU_OPT_NO_ASID_RETENTION, "qcom,no-asid-retention" },
 	{ ARM_SMMU_OPT_DISABLE_ATOS, "qcom,disable-atos" },
@@ -3357,15 +3358,19 @@ static void arm_smmu_device_reset(struct arm_smmu_device *smmu)
 
 	/*
 	 * Reset stream mapping groups: Initial values mark all SMRn as
-	 * invalid and all S2CRn as bypass unless overridden.
+	 * invalid and all S2CRn as bypass unless overridden. With
+	 * qcom,skip-init the bootloader/hypervisor programming is kept.
 	 */
-	for (i = 0; i < smmu->num_mapping_groups; ++i)
-		arm_smmu_write_sme(smmu, i);
+	if (!(smmu->options & ARM_SMMU_OPT_SKIP_INIT)) {
+		for (i = 0; i < smmu->num_mapping_groups; ++i)
+			arm_smmu_write_sme(smmu, i);
 
-	/* Make sure all context banks are disabled and clear CB_FSR  */
-	for (i = 0; i < smmu->num_context_banks; ++i) {
-		arm_smmu_write_context_bank(smmu, i);
-		arm_smmu_cb_write(smmu, i, ARM_SMMU_CB_FSR, ARM_SMMU_FSR_FAULT);
+		/* Make sure all context banks are disabled and clear CB_FSR  */
+		for (i = 0; i < smmu->num_context_banks; ++i) {
+			arm_smmu_write_context_bank(smmu, i);
+			arm_smmu_cb_write(smmu, i, ARM_SMMU_CB_FSR,
+					  ARM_SMMU_FSR_FAULT);
+		}
 	}
 
 	/* Invalidate the TLB, just in case */
