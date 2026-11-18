@@ -594,20 +594,41 @@ static int pil_init_image_trusted(struct pil_desc *pil,
 		const u8 *metadata, size_t size)
 {
 	struct pil_tz_data *d = desc_to_data(pil);
+	struct device *scm_dev;
+	dma_addr_t mdata_phys;
+	void *mdata_buf;
 	u32 scm_ret = 0;
 	int ret;
 
 	if (d->subsys_desc.no_auth)
 		return 0;
 
+	/*
+	 * qcom_scm_pas_init_image() takes the metadata's DMA address. TZ
+	 * protects the blob during the call, so it has to be physically
+	 * contiguous and non-cacheable: copy it into a coherent buffer of
+	 * the SCM device, as qcom_scm did itself on msm-5.4.
+	 */
+	scm_dev = qcom_get_scm_device();
+	if (IS_ERR_OR_NULL(scm_dev))
+		return -EPROBE_DEFER;
+
+	mdata_buf = dma_alloc_coherent(scm_dev, size, &mdata_phys, GFP_KERNEL);
+	if (!mdata_buf)
+		return -ENOMEM;
+	memcpy(mdata_buf, metadata, size);
+
 	ret = scm_pas_enable_bw();
 	if (ret)
-		return ret;
+		goto free_mdata;
 
-	scm_ret = qcom_scm_pas_init_image(d->pas_id, metadata, size);
+	scm_ret = qcom_scm_pas_init_image(d->pas_id, mdata_phys);
 
 	scm_pas_disable_bw();
-	return scm_ret;
+	ret = scm_ret;
+free_mdata:
+	dma_free_coherent(scm_dev, size, mdata_buf, mdata_phys);
+	return ret;
 }
 
 static int pil_mem_setup_trusted(struct pil_desc *pil, phys_addr_t addr,
