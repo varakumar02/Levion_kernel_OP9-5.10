@@ -61,7 +61,6 @@ static struct clk_debug_mux apss_cc_debug_mux = {
 		.ops = &clk_debug_mux_ops,
 		.parent_names = apss_cc_debug_mux_parent_names,
 		.num_parents = ARRAY_SIZE(apss_cc_debug_mux_parent_names),
-		.flags = CLK_IS_MEASURE,
 	},
 };
 
@@ -231,7 +230,6 @@ static struct clk_debug_mux cam_cc_debug_mux = {
 		.ops = &clk_debug_mux_ops,
 		.parent_names = cam_cc_debug_mux_parent_names,
 		.num_parents = ARRAY_SIZE(cam_cc_debug_mux_parent_names),
-		.flags = CLK_IS_MEASURE,
 	},
 };
 
@@ -319,7 +317,6 @@ static struct clk_debug_mux disp_cc_debug_mux = {
 		.ops = &clk_debug_mux_ops,
 		.parent_names = disp_cc_debug_mux_parent_names,
 		.num_parents = ARRAY_SIZE(disp_cc_debug_mux_parent_names),
-		.flags = CLK_IS_MEASURE,
 	},
 };
 
@@ -629,7 +626,6 @@ static struct clk_debug_mux gcc_debug_mux = {
 		.ops = &clk_debug_mux_ops,
 		.parent_names = gcc_debug_mux_parent_names,
 		.num_parents = ARRAY_SIZE(gcc_debug_mux_parent_names),
-		.flags = CLK_IS_MEASURE,
 	},
 };
 
@@ -701,7 +697,6 @@ static struct clk_debug_mux gpu_cc_debug_mux = {
 		.ops = &clk_debug_mux_ops,
 		.parent_names = gpu_cc_debug_mux_parent_names,
 		.num_parents = ARRAY_SIZE(gpu_cc_debug_mux_parent_names),
-		.flags = CLK_IS_MEASURE,
 	},
 };
 
@@ -743,7 +738,6 @@ static struct clk_debug_mux video_cc_debug_mux = {
 		.ops = &clk_debug_mux_ops,
 		.parent_names = video_cc_debug_mux_parent_names,
 		.num_parents = ARRAY_SIZE(video_cc_debug_mux_parent_names),
-		.flags = CLK_IS_MEASURE,
 	},
 };
 
@@ -758,7 +752,6 @@ static struct clk_debug_mux mc_cc_debug_mux = {
 		.ops = &clk_debug_mux_ops,
 		.parent_names = mc_cc_debug_mux_parent_names,
 		.num_parents = ARRAY_SIZE(mc_cc_debug_mux_parent_names),
-		.flags = CLK_IS_MEASURE,
 	},
 };
 
