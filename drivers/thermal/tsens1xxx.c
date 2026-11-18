@@ -391,7 +391,7 @@ static irqreturn_t tsens_irq_thread(int irq, void *data)
 				code_to_degc((status &
 				TSENS_SN_STATUS_TEMP_MASK),
 				(tm->sensor + i)));
-			of_thermal_handle_trip(tm->dev, tm->sensor[i].tzd);
+			thermal_zone_device_update(tm->sensor[i].tzd, THERMAL_EVENT_UNSPECIFIED);
 		}
 	}
 

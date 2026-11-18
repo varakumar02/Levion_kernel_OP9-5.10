@@ -271,8 +271,8 @@ static void tsens_therm_fwk_notify(struct work_struct *work)
 			}
 			TSENS_DBG(tmdev, "Calling trip_temp for sensor %d\n",
 					i);
-			of_thermal_handle_trip_temp(tmdev->dev,
-				tmdev->sensor[i].tzd, temp);
+			thermal_zone_device_update(tmdev->sensor[i].tzd,
+				THERMAL_EVENT_UNSPECIFIED);
 		}
 	}
 	if (tmdev->zeroc_sensor_id != MIN_TEMP_DEF_OFFSET) {
@@ -283,8 +283,8 @@ static void tsens_therm_fwk_notify(struct work_struct *work)
 			return;
 		}
 		TSENS_DBG(tmdev, "Calling trip_temp for sensor %d\n", i);
-		of_thermal_handle_trip_temp(tmdev->dev,
-			tmdev->zeroc.tzd, temp);
+		thermal_zone_device_update(tmdev->zeroc.tzd,
+			THERMAL_EVENT_UNSPECIFIED);
 	}
 }
 

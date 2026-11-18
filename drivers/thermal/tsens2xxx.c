@@ -600,8 +600,7 @@ static irqreturn_t tsens_tm_irq_thread(int irq, void *data)
 			/* Use id for multiple controllers */
 			pr_debug("sensor:%d trigger temp (%d degC)\n",
 				tm->sensor[i].hw_id, temp);
-			of_thermal_handle_trip_temp(tm->dev,
-				tm->sensor[i].tzd, temp);
+			thermal_zone_device_update(tm->sensor[i].tzd, THERMAL_EVENT_UNSPECIFIED);
 		}
 	}
 
@@ -632,7 +631,7 @@ static irqreturn_t tsens_tm_zeroc_irq_thread(int irq, void *data)
 
 	TSENS_DBG(tm, "Tsens ZeroC status: %d set_t:%d reset_t:%d\n",
 		status, set_thr, reset_thr);
-	of_thermal_handle_trip_temp(tm->dev, tm->zeroc.tzd, status);
+	thermal_zone_device_update(tm->zeroc.tzd, THERMAL_EVENT_UNSPECIFIED);
 
 	return IRQ_HANDLED;
 }
