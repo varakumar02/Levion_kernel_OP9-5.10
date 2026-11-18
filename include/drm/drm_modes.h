@@ -305,6 +305,31 @@ struct drm_display_mode {
 	u16 crtc_vtotal;
 
 	/**
+	 * @private:
+	 *
+	 * Pointer for driver private data. This can only be used for mode
+	 * objects passed to drivers in modeset operations. It shouldn't be used
+	 * by atomic drivers since they can store any additional data by
+	 * subclassing state structures.
+	 */
+	int *private;
+
+	/**
+	 * @private_flags:
+	 *
+	 * Similar to @private, but just an integer.
+	 */
+	int private_flags;
+
+	/**
+	 * @vrefresh:
+	 *
+	 * Vertical refresh rate in Hz set by the driver or taken from the user
+	 * mode. When non-zero, drm_mode_vrefresh() returns it.
+	 */
+	int vrefresh;
+
+	/**
 	 * @width_mm:
 	 *
 	 * Addressable size of the output in mm, projectors should set this to

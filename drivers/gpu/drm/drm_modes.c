@@ -759,6 +759,9 @@ int drm_mode_vrefresh(const struct drm_display_mode *mode)
 {
 	unsigned int num, den;
 
+	if (mode->vrefresh > 0)
+		return mode->vrefresh;
+
 	if (mode->htotal == 0 || mode->vtotal == 0)
 		return 0;
 
@@ -1971,6 +1974,7 @@ int drm_mode_convert_umode(struct drm_device *dev,
 	out->vsync_end = in->vsync_end;
 	out->vtotal = in->vtotal;
 	out->vscan = in->vscan;
+	out->vrefresh = in->vrefresh;
 	out->flags = in->flags;
 	/*
 	 * Old xf86-video-vmware (possibly others too) used to
